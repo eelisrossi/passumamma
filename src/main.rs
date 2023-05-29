@@ -5,7 +5,7 @@ use std::{env, error::Error, ffi::OsString, fs::File, process};
 
 fn get_first_arg() -> Result<OsString, Box<dyn Error>> {
     match env::args_os().nth(1) {
-        None => Err(From::from("expected 1 argument, but got none")),
+        None => Ok(OsString::from("./src/default_wordlist.csv")),
         Some(file_path) => Ok(file_path),
     }
 }
@@ -41,7 +41,17 @@ fn run() -> Result<(), Box<dyn Error>> {
 fn get_random_word(words: &Vec<String>) -> String {
     let mut rng = ChaCha20Rng::from_entropy();
     let index = rng.gen_range(0..words.len());
-    let random_word = &words[index];
+    let random_word = normalize_word(&words[index]);
+    if random_word.len() < 3 || random_word.len() > 6 {
+        get_random_word(words)
+    } else {
+        random_word.to_string()
+    }
+}
+
+fn normalize_word(word: &String) -> String {
+    let random_word = &word.replace("ä", "a");
+    let random_word = &random_word.replace("ö", "o");
     random_word.to_string()
 }
 
@@ -57,6 +67,6 @@ fn create_passphrase(words: &Vec<String>) -> String {
     } else {
         second_word = second_word.to_uppercase();
     }
-    let passphrase = format!("{}-{}{}", first_word, second_word, number);
+    let passphrase = format!("{}-{}#{}", first_word, second_word, number);
     passphrase
 }
